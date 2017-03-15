@@ -13,7 +13,7 @@ public class DBmanager {
 
    //  Database credentials
    private static final String USER = "root";
-   private static final String PASS = "salma";
+   private static final String PASS = "123456";
    
    private static Connection CONNECTION;
    
@@ -84,7 +84,7 @@ public class DBmanager {
            //Logger.getLogger(DBmanager.class.getName()).log(Level.SEVERE, null, ex);
            return false;
        }
-        return x;
+        return !x;
     }
     
     public boolean InsertSpam(String url)
