@@ -42,11 +42,11 @@ public class Parse {
        if(doc.body()!=null){
         String AllBody=doc.getElementsByTag("li").text()+" "+doc.getElementsByTag("p").text()+" "
                 +doc.getElementsByTag("table").text()+" "+doc.getElementsByTag("dl").text();
-        AllBody+="ASD"+doc.getElementsByTag("h1").text()+doc.getElementsByTag("h2").text()+"ASD"+doc.getElementsByTag("b").text()+"D";
+        AllBody+="ASD"+doc.getElementsByTag("h1").text()+doc.getElementsByTag("h2").text()+"ppp"+doc.getElementsByTag("b").text()+"D";
         AllBody=AllBody.toLowerCase().replaceAll("[^a-zA-Z' ]", " ")
                 .replaceAll("\\b("+RemovedString+")\\b\\s+", " ");
         AllBody=StringUtil.normaliseWhitespace(AllBody);
-        String[] ConcatStr=AllBody.split("as");
+        String[] ConcatStr=AllBody.split("pp");
         Parsed=new HtmlText();
         Parsed.Plain=ConcatStr[0];
         Parsed.Headers=ConcatStr[1].replaceFirst("d", "");
