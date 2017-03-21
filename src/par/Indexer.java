@@ -3,118 +3,153 @@ package par;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
-public class Indexer {
+class DocData{
+    public String OrderInDoc;
+    public Integer Frequency;
+}
+
+public class Indexer implements Runnable{
     
-    final private static double AllowedPercentage =0.2 ;
+    final private static double AllowedPercentage =1 ;
     final private static int PlainValue = 1;
     final private static int BoldValue = 10;
     final private static int HeaderValue = 100;
     final private static int TitleValue = 1000;
+    
+    
    
     
-    public static boolean GetWordFreq(Map<String, Integer> map ,String TypeA ,  int ValueA ,String TypeB , int ValueB  )
+    public static boolean GetWordFreq(Map<String, DocData> map ,String TypeA , int ValueA )
     {
         String [] WordsA = TypeA.split(" ");
-        String [] WordsB = TypeB.split(" ");
-        float TotalWordsNumber = WordsA.length + WordsB.length ;
-
-        for (String w : WordsA) 
+        String prefix = "";
+        if(ValueA == TitleValue)
+            prefix = "0;0;";
+        if (ValueA == HeaderValue)
+            prefix = "0;";
+        if(ValueA != BoldValue)
         {
-            Integer n = map.get(w);
-            n = (n == null) ? ValueA : n+ValueA;
-            map.put(w, n);
-        }
-        if(ValueA == PlainValue || ValueB == BoldValue)
-        {
-            for (Object name: map.keySet())
+            int i = 1;
+            for (String w : WordsA) 
             {
-                if((((float) map.get(name))/TotalWordsNumber)>=AllowedPercentage)
-                    return true; 
+                DocData n = map.get(w);
+                if (n==null)
+                {
+                    n =  new DocData ();
+                    n.OrderInDoc =  prefix + Integer.toString(i);
+                    n.Frequency = ValueA;
+                }
+                else
+                {
+                    n.OrderInDoc = n.OrderInDoc+","+Integer.toString(i);
+                    n.Frequency += ValueA;
+                }
+
+                map.put(w, n);
+                i++;
+            }
+            if(ValueA == PlainValue)
+            {
+                for (Object name: map.keySet())
+                {
+                    if((((float) map.get(name).Frequency)/(float)WordsA.length)>=AllowedPercentage)
+                        return true; 
+                }
+            }
+            else if (ValueA != TitleValue)
+            {
+                map.keySet().forEach((name) -> {
+                    map.get(name).OrderInDoc +=";";
+                });
             }
         }
-        for (String w : WordsB) 
+        else
         {
-            Integer n = map.get(w);
-            n = (n == null) ? ValueB : n+ValueB;
-            map.put(w, n);
+            for (String w : WordsA) 
+            {
+                if(w.isEmpty())
+                    continue;
+                DocData n = map.get(w);
+                n.Frequency += ValueA;
+                map.put(w, n);
+            }
         }
-//        if(ValueA == PlainValue)
-//        {
-//            for (Object name: map.keySet())
-//            {
-//                if((((float) map.get(name))/TotalWordsNumber)>=AllowedPercentage)
-//                    return true; 
-//            }
-//        }
+
         return false;
     }
     
-    public static boolean InsertSpam(DBmanager manager, String url )
+    public static boolean WeightOfWords(DBmanager manager) throws InterruptedException
+    {
+        Map<String, DocData> map = new HashMap<>();
+        HtmlText DocInfo;
+     
+            if(Executer.IndexQ.isEmpty()){
+               // System.out.println("Empty Q");
+                return false; 
+            }
+            
+            synchronized(Executer.IndexQ)
+        {
+             DocInfo = Executer.IndexQ.remove();
+        }
+        
+        if(GetWordFreq(map,DocInfo.Plain,PlainValue))
+        {
+           if(InsertSpam(manager,DocInfo.Url))
+               System.out.println("\nURL Inserted as Spam ");
+           return true; 
+        }
+        try{
+        GetWordFreq(map,DocInfo.Bold,BoldValue);}
+        catch(NullPointerException n){
+            System.out.println(DocInfo.Url);
+           
+            return false;
+        }
+        GetWordFreq(map,DocInfo.Headers,HeaderValue);
+        GetWordFreq(map,DocInfo.Title,TitleValue);
+        return (InsertInDB(DocInfo.Url,manager,map));
+            
+    }
+    
+     public static boolean InsertSpam(DBmanager manager, String url )
     {
         if (manager.DeleteUrlKeyword(url))
         {
-            System.out.println("\nDeleted Succesfully");
+            System.out.println("\nDeleted from Spam Succesfully");
             return (manager.InsertSpam(url));    
         }
         return false;     
     }
-    
-    public static boolean WeightOfWords(DBmanager manager,String url , String title, String header , String bold , String plain )
-    {
-        Map<String, Integer> map = new HashMap<>();
-        
-        if(GetWordFreq(map,plain,PlainValue,bold,BoldValue))
-        {
-           if(manager.InsertSpam(url))
-               System.out.println("\nURL Inserted as Spam ");
-           return true; 
-        }
-        
-        GetWordFreq(map,header,HeaderValue,title,TitleValue);
-        String doc = title+header+bold+plain;
-        return (InsertInDB(url,doc,manager,map));
-            
-    }
-    
-    public static boolean InsertInDB(String url ,String doc ,DBmanager manager ,Map<String, Integer> map)
+     
+    public static boolean InsertInDB(String url ,DBmanager manager ,Map<String, DocData> map)
     {
         if(manager.DeleteUrlKeyword(url))
         {
             System.out.println("\nDeleted Succesfully");
             if (manager.InsertUrlKeyword(url,map))
-            {
-                System.out.println("\nInserted keywords Succesfully");
-                if(manager.InsertUrl(url, doc))
-                    System.out.println("\nInserted document Succesfully");             
-            }
+                System.out.println("\nInserted keywords Succesfully");           
         }
         return false;     
     }
     
     
-    public static void main(String[] args) {
-        String s ="aminals cat ahmed bom a a cat cat dog";
-        String a ="and a kiss from me to you";
-        String p ="with a great big hug with a great big hug with a great big hug with a great big hug" ;
-        String b = " we are a happy family";
-        //String b ="";
-        DBmanager m = new DBmanager ();
-         WeightOfWords(m,"www.animals.com" , s, a , b , p );
-        //m.DeleteUrlKeyword("www.animals.com");
-//        
-//        for (Object name: map.keySet()){
-//
-//            String key =name.toString();
-//            String value = map.get(name).toString();  
-//            System.out.println(key + " " + value);  
-//            m.InsertUrlKeyword("www.sama.com",key,value);
-//        }
-        m.CloseConnection();
+    @Override
+    public void run() {
+        Map<String, DocData> map = new HashMap<>();
+        while(true){
+            try {
+                WeightOfWords(IndexerManager.m);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Indexer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
     
 }
-

@@ -1,6 +1,7 @@
 
 package par;
 import java.sql.*;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,24 +48,28 @@ public class DBmanager {
         return 0;
     }
     
-    public boolean InsertUrlKeyword(String url , Map<String, Integer> map )
+    public boolean InsertUrlKeyword(String url , Map<String, DocData> map )
     {
         CallableStatement cstmt;
         boolean x = true;
+        int i=0;
         try{
-            cstmt = CONNECTION.prepareCall("{call AddKeyword(?,?,?)}");
+            cstmt = CONNECTION.prepareCall("{call AddKeyword(?,?,?,?)}");
             
-            for (Object name: map.keySet())
-            {
+            for (String name : map.keySet()) {
+                
                 cstmt.setString(1, url );
-                cstmt.setString(2, name.toString());
-                cstmt.setString(3,map.get(name).toString());
+                cstmt.setString(2, name);
+                cstmt.setString(3,map.get(name).Frequency.toString());
+                cstmt.setString(4,map.get(name).OrderInDoc);
                 x = cstmt.execute();
-                System.out.println(x);
+                i++;
             }
+            
 
         } catch (SQLException ex) {
-//           Logger.getLogger(DBmanager.class.getName()).log(Level.SEVERE, null, ex);
+            
+             System.out.println(i);
              return false;
        }
         return !x;
@@ -78,7 +83,7 @@ public class DBmanager {
             cstmt = CONNECTION.prepareCall("{call DeleteUrlKeywords(?)}");
             cstmt.setString(1, url );
              x = cstmt.execute();
-            System.out.print(x);
+            System.out.print("\nattempt to delete keyword");
 
         } catch (SQLException ex) {
            //Logger.getLogger(DBmanager.class.getName()).log(Level.SEVERE, null, ex);
@@ -103,21 +108,5 @@ public class DBmanager {
         return !x;
     }
     
-    public boolean InsertUrl(String url,String doc)
-    {
-        CallableStatement cstmt = null;
-        boolean x ;
-        try{
-            cstmt = CONNECTION.prepareCall("{call AddUrl(?,?)}");
-            cstmt.setString(1, url );
-            cstmt.setString(1, doc );
-            x = cstmt.execute();
-            
-        } catch (SQLException ex) {
-//           Logger.getLogger(DBmanager.class.getName()).log(Level.SEVERE, null, ex);
-             return false;
-       }
-        return !x;
-    }
         
 }
