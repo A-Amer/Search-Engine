@@ -18,19 +18,20 @@ public class IndexerManager implements Runnable {
 
     @Override
     public void run() {
+        //create threads
         Thread t1 = new Thread(new Indexer());
         Thread t2 = new Thread(new Indexer());
         Thread t3 = new Thread(new Indexer());
         t1.start();
         t2.start();
         t3.start();
-        try {
+        try {//wait for threads to join
             t1.join();
             t2.join();
             t3.join();
         } catch (InterruptedException ex) {
             Logger.getLogger(IndexerManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-        m.CloseConnection();
+        m.CloseConnection();//close connection to database
     }
 }

@@ -43,6 +43,7 @@ public class DBmanager {
     }
 
     public boolean InsertUrlKeyword(String url, Map<String, DocData> map) {
+        //insert the url and its corresponding keywords , frequencies and orders
         CallableStatement cstmt;
         boolean x = true;
         int i = 0;
@@ -64,7 +65,7 @@ public class DBmanager {
             System.out.println(i);
             DeleteUrlKeyword(url);
             synchronized (Executer.IndexedPages) {
-                Executer.IndexedPages--;
+                Executer.IndexedPages--;//if error occurs during insertion decrement counter of indexed pages
             }
             return false;
         }
@@ -125,7 +126,7 @@ public class DBmanager {
                 Executer.RestrictedSites.add(SpamResult.getString("spamurl"));
             }
             SpamResult.close();
-            if (RowCount > 5) {//only get visited page if a backup was done
+            if (RowCount > 7) {//only get visited page if a backup was done
                 Query = "SELECT * FROM guest.PagesInOut;";
                 DegreeResult = statement.executeQuery(Query);
                 InOutDeg InsertPageDeg;
@@ -164,10 +165,10 @@ public class DBmanager {
         boolean x;
         try {
             cstmt = CONNECTION.prepareCall("{call InsertPagesInOut(?,?,?)}");
-
+            
             cstmt.setString(1, url);
-            cstmt.setString(2, String.valueOf(pin));
-            cstmt.setString(3, String.valueOf(pout));
+            cstmt.setInt(2, pin);
+            cstmt.setInt(3, pout);
             x = cstmt.execute();
 
         } catch (SQLException ex) {

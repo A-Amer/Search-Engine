@@ -15,7 +15,7 @@ import org.jsoup.select.Elements;
 public class HtmlUrlFetcher implements Runnable {
 
     Document Html;//document dequed from DocQ
-    final int max = 20;//Maximum number of pages from the same domain
+    final int max = 15;//Maximum number of pages from the same domain
 
     HtmlUrlFetcher(Document doc) {
         Html = doc;
@@ -39,11 +39,11 @@ public class HtmlUrlFetcher implements Runnable {
         Elements NewURLs = Html.select("a");//get all urls in page 
         for (Element URL : NewURLs) {
 
-            CheckString = URL.attr("abs:href").toLowerCase();//get the absolute path of each url .Lower cae to avoid duplicates
+            CheckString = URL.attr("abs:href").toLowerCase();//get the absolute path of each url .Lower case to avoid duplicates
 
             if (CheckString.contains("#") || CheckString.isEmpty()
-                    || Executer.RestrictedSites.contains(CheckString)
-                    || "Yippy".equals(URL.ownText()/*to be removed*/)) {
+                    || Executer.RestrictedSites.contains(CheckString)) 
+            {
                 continue;
             }/*if the url is empty,refers to a restricted site,refers to the same page
             we will ignore it*/

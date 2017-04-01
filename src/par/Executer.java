@@ -31,7 +31,7 @@ class Executer {
     protected static Queue<Document> DocQ = new LinkedList<>();
     protected static Set<String> RestrictedSites = new HashSet<>();
     protected static Integer IndexedPages = 0;
-    final static int StoppingCriteria = 50;
+    final static int StoppingCriteria = 5000;
     static int CrawlerEnd = 0, ParserEnd = 0;
 
     public static void main(String[] args) {
@@ -54,7 +54,7 @@ class Executer {
                 DBmanager AddToDb = new DBmanager();
                 List<Entry<String, InOutDeg>> Seed = InOutDeg.entriesSortedByValues(PageDegree);
                 AddToDb.DeleteSeeds();
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 7; i++) {
                     AddToDb.InsertSeed(Seed.get(i).getKey());
                 }
                 Seed.forEach((s) -> {
