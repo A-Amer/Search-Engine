@@ -25,7 +25,7 @@ public class CrawlerManager implements Runnable {
  
     @Override
     public void run() {
-        Thread.currentThread().setName("CrawlerManager");
+        Thread.currentThread().setName("CrawlerManager"); // set name for debudding purposes
         System.out.println("Enter the number of crawler threads: ");
         try { 
            nThreads= Integer.parseInt(reader.readLine());
@@ -42,7 +42,7 @@ public class CrawlerManager implements Runnable {
         }
 
         try {
-      
+      // loop until user interrupts or we reach the stoppping criteria
             while (!reader.ready()) {
                 if (Executer.IndexedPages >= Executer.StoppingCriteria) {
                     break;
@@ -50,7 +50,7 @@ public class CrawlerManager implements Runnable {
 
             }
 
-            if (Executer.IndexedPages < Executer.StoppingCriteria) // if crawler finished , it should interrupt input and clear db 
+            if (Executer.IndexedPages < Executer.StoppingCriteria) //actions to do if the user wishes to terminate
             {
                 DBmanager DB = new DBmanager();
                 userTerminates = true;
