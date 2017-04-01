@@ -3,73 +3,55 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package par;
+package Engine;
 
 import java.util.NoSuchElementException;
-import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jsoup.nodes.Document;
-
 
 /**
  *
  * @author AAmer
  */
-public class ParserManager implements Runnable{
-    
-    @Override
-    public void run(){
-       
-        Thread Par1=new Thread(new DocumentFetcher());
-        Thread Par2=new Thread(new DocumentFetcher());
-        Thread Par3=new Thread(new DocumentFetcher());
-        Par1.start();
-        Par2.start();
-        Par3.start();
-        try {
-            Par1.join();
-            Par2.join();
-            Par3.join();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(ParserManager.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-    }
-    
-}
+public class ParserManager implements Runnable {
 
-class DocumentFetcher implements Runnable{
-   
     @Override
     public void run() {
-        Document Html=null ;
-        
-        while(true){
-            try{
-               synchronized(Executer.DocQ){ 
-                         Html=Executer.DocQ.remove();
-               }
-               
+        Document Html;
+
+        while (true) {
+            try {
+
+                synchronized (Executer.DocQ) {
+                    Html = Executer.DocQ.remove();//remove document in DocQ to parse it
+                }
+
+            } catch (NoSuchElementException Empty) {//if the DocQ is empty 
+                if (Executer.CrawlerEnd == 1) {//check if the crawler finished its task and stopping criteria was reached
+                    Executer.ParserEnd = 1;//then parser to is done
+                    return;
+                }
+                Html = null;//otherwise wait till the DocQ is filled by the crawler
             }
-            catch(NoSuchElementException Empty){
-               
-                 Html=null;
-            } 
-        
-        if(Html!=null){
-                Thread Parsing= new Thread(new Parse(Html));
-                Thread UrlFetch=new Thread(new HtmlUrlFetcher(Html));
-                Parsing.start();
-                UrlFetch.start();
-                    try {
-                        Parsing.join();
-                        UrlFetch.join();
-                        
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(DocumentFetcher.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-         }
-       }
+
+            if (Html != null) {
+                Thread Parsing = new Thread(new Parse(Html));
+                Parsing.setName("parser");
+                Parsing.start();//a thread to parse the document for the indxr
+
+                Thread UrlFetch = new Thread(new HtmlUrlFetcher(Html));
+                UrlFetch.setName("fetcher");
+                UrlFetch.start();//thread to extract urls from document and count in and out degree of pages
+
+                try {
+                    Parsing.join();//wait till threads finish to get new document
+                    UrlFetch.join();
+
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ParserManager.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
     }
 }

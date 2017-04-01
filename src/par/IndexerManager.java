@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package par;
+package Engine;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,19 +12,22 @@ import java.util.logging.Logger;
  *
  * @author AAmer
  */
-public class IndexerManager implements Runnable{
-    
-   
-    protected static DBmanager m = new DBmanager ();
-    
-    
+public class IndexerManager implements Runnable {
+
+    protected static DBmanager m = new DBmanager();
 
     @Override
     public void run() {
         Thread t1 = new Thread(new Indexer());
+        Thread t2 = new Thread(new Indexer());
+        Thread t3 = new Thread(new Indexer());
         t1.start();
+        t2.start();
+        t3.start();
         try {
             t1.join();
+            t2.join();
+            t3.join();
         } catch (InterruptedException ex) {
             Logger.getLogger(IndexerManager.class.getName()).log(Level.SEVERE, null, ex);
         }
