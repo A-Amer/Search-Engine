@@ -14,14 +14,14 @@ public class Crawler implements Runnable {
     protected String getNextUrl() { // check that the queue is not empty  
         synchronized (Executer.Seeds) {
             if (Executer.Seeds.isEmpty()) {
-                return null; // Check that this URL is not in the set--> No need bec it's done b4 enqueuing   
+                return null;   
             }
             return Executer.Seeds.remove(); // 
         }
 
     }
 
-    protected boolean enqueueDocument(Document D) {
+    protected boolean enqueueDocument(Document D) { // after retrieving the html doc , it's added to the doc Queue between crawler and parser 
         boolean IsAdded;
         synchronized (Executer.DocQ) {
             IsAdded = Executer.DocQ.add(D);
@@ -34,7 +34,7 @@ public class Crawler implements Runnable {
         return false;
 
     }
-
+// retrieve HTML doc 
     protected boolean getHTMLDocument(String URL) {
         Document HTMLdoc = null;
         try {
@@ -58,23 +58,23 @@ public class Crawler implements Runnable {
     protected void Crawl() {
         String URL = null;
         boolean Retrieved = false;
-        boolean RobotAllow = false;
+        boolean RobotAllow = false;   // loop until the stopping criteria or user terminating the crawler 
         while (Executer.IndexedPages < Executer.StoppingCriteria && !CrawlerManager.userTerminates) {
             URL = null;
             Retrieved = false;
             RobotAllow = false;
 
-            URL = getNextUrl();
+            URL = getNextUrl(); // fetch the next URL in the queue 
 
             if (URL != null) {
                 System.out.println(Thread.currentThread().getName() + " Retrieved the following URL: " + URL);
                 RobotAllow = RobotsManager.checkRobot(URL);
-
+  // if for any reason, it's not allowed to crawl this website, it's considered as a spam to avoid further checking
                 if (!RobotAllow) {
                     Indexer.InsertSpam(IndexerManager.m, URL);
                 }
             }
-
+// if it's allowed to crawl the document , retrieve itd HTML Doc
             if (URL != null && RobotAllow) {
 
                 Executer.PageDegree.putIfAbsent(URL, new InOutDeg());
@@ -84,7 +84,7 @@ public class Crawler implements Runnable {
            
 
         }
-        //  Executer.interruptCrawler();
+     
     }
 
     @Override
