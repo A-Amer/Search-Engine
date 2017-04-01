@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class RobotsChecker {
-
+// The robots checker has two lists for the allowed and disallowed URLs of web domains visited 
     static protected HashMap<String, ArrayList<String>> Allowed = new HashMap<String, ArrayList<String>>();
     static protected HashMap<String, ArrayList<String>> Disallowed = new HashMap<String, ArrayList<String>>();
 
@@ -24,6 +24,7 @@ public class RobotsChecker {
 
     ; 
 protected URL getRobotsURL(String url) throws MalformedURLException {
+    // retrieve the robots.txt url for the given url 
         URL main = new URL(url);
         StringBuilder URLtemp = new StringBuilder(url);
         int i = URLtemp.indexOf("://"); // must maintain the protocol 
@@ -36,16 +37,16 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
 
     }
 
-    protected boolean checkRobot(String URL) {
+    protected boolean checkRobot(String URL) { // the main function which checks the robots.txt validity 
         URL Roboturl = null;
         URL UrlToCheck = null;
         try {
             UrlToCheck = new URL(URL);
-            String protocol = UrlToCheck.getProtocol();
+            String protocol = UrlToCheck.getProtocol(); // our crawler doesn't parse protocols other than http or https
             if (!protocol.equals("http") && !protocol.equals("https")) {
                 return false;
             }
-            Roboturl = getRobotsURL(URL);
+            Roboturl = getRobotsURL(URL); // get the robots.txt url for this domain
 
         } catch (MalformedURLException m) {
             System.out.println(Thread.currentThread().getName() + "Invalid Robots URL");
@@ -56,12 +57,13 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
         if (!Allowed.containsKey(Roboturl.getHost()) && !Disallowed.containsKey(Roboturl.getHost()));
         {
             if (updateRobotList(Roboturl)) {
-                return true;   //return true bec robot file not found or Disallow: 
+                return true;   //return true bec 1- robot.txt url was not found or  specified Disallow: in the robots.txt doc 
             }
         }
 
-        String file = UrlToCheck.getFile(); // gets the directory we are searching for
-        try {
+        String file = UrlToCheck.getFile(); // gets the directory(domain) we are searching for
+        try { 
+           
             for (String s : Allowed.get(Roboturl.getHost())) {
                 if ((file.compareToIgnoreCase(s) == 0)) {
                     System.out.println(Thread.currentThread().getName() + " due to " + s + "  your URL is allowed !!");
@@ -83,11 +85,12 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
 
     }
 
-    protected boolean updateRobotList(URL urlRobot) //  must make sure that this is for our USerAgent 
+    protected boolean updateRobotList(URL urlRobot) 
     {
         HttpURLConnection c;
 
         try {
+            // make sure that we are allowed to retrieve our robots.txt 
             c = (HttpURLConnection) urlRobot.openConnection();
             c.addRequestProperty("User-Agent", "Mozilla/4.76");
         } catch (IOException e) {
@@ -99,7 +102,7 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
             BufferedReader reader = new BufferedReader(new InputStreamReader(c.getInputStream()));
             String RobotTxt = new String();
             String path;
-            ArrayList<String> disallowed = new ArrayList<String>();
+            ArrayList<String> disallowed = new ArrayList<String>();  // two lists to be added to the hashmap afterwards
             ArrayList<String> allowed = new ArrayList<String>();
 
             while ((RobotTxt = reader.readLine()) != null) //loop until we reach the desired user agent
@@ -109,11 +112,11 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
                 }
             }
 
-            while ((RobotTxt = reader.readLine()) != null) {
-                if (RobotTxt.startsWith("User")) {
+            while ((RobotTxt = reader.readLine()) != null) { 
+                if (RobotTxt.startsWith("User")) { // if we encounter another user agent, the loop should be broekdn 
                     break;
                 }
-
+                       // add disallowed urls
                 if (RobotTxt.indexOf("Disallow:") == 0) {
                     path = RobotTxt.substring("Disallow:".length());
                     int commentIndex;
@@ -129,7 +132,7 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
                         return true;
                     }
                     disallowed.add(path);
-                } else if (RobotTxt.indexOf("Allow:") == 0) {
+                } else if (RobotTxt.indexOf("Allow:") == 0) {  // add allowed urls
                     path = RobotTxt.substring("Allow:".length());
                     int commentIndex;
                     commentIndex = path.indexOf("#");
@@ -141,7 +144,7 @@ protected URL getRobotsURL(String url) throws MalformedURLException {
                 }
             }
             reader.close(); //Closes buffer and releases memory resources
-            Allowed.put(urlRobot.getHost(), allowed);
+            Allowed.put(urlRobot.getHost(), allowed);  
             Disallowed.put(urlRobot.getHost(), disallowed);
             allowed = null;
             disallowed = null;
